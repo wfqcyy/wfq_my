@@ -961,4 +961,113 @@ order by
 
 
 
+----------------------------------------------------
+# num=input()
+# num=num[::-1]
+# s=[]
+# for i in num:
+#     if i not in s:
+#         s.append(i)
+# print(int(''.join(s)))
 
+
+
+# a = input()[::-1]
+# print(set(a))
+# print(sorted(set(a),key=a.index))
+# print("".join(sorted(set(a),key=a.index)))
+
+
+
+
+# def get_stamp(num):
+#     dic = {1: 1, 2: 2, 3: 3}
+#     if num in dic.keys():
+#         return dic[num]
+#     else:
+#         return get_stamp(num-1)+get_stamp(num-2)+get_stamp(num-3)
+#
+# print(get_stamp(7))
+
+#250
+# f=lambda x,n:x**n
+# def main(factors,x):
+#     sum=0
+#     for i in range(len(factors))[::-1]:
+#         sum+=factors[len(factors)-1-i]*f(x,i)
+#     return sum
+#
+# print(main((3,0,1,2),3))
+
+
+#251
+
+
+# def GCU(m, n):
+#     if not m:
+#         return n
+#     elif not n:
+#         return m
+#     elif m is n:
+#         return m
+#
+#     if m > n:
+#         gcd = n
+#     else:
+#         gcd = m
+#
+#     while m%gcd or n%gcd:
+#         gcd -= 1
+#
+#     return gcd
+# print(GCU(12,36))
+
+
+#252
+
+
+# def outer(a,b):
+#     def inner(x):
+#         return a*x+b
+#     return inner
+#
+# def main(a,b,x):
+#     return outer(a,b)(x)
+#
+# print(main(3,5,7))
+
+
+#256
+
+import zlib
+import pickle
+import hashlib
+
+# def main(obj):
+#     return  zlib.crc32(pickle.dumps(obj))
+#
+#
+# print(main('董付国，Python小屋'))
+
+
+# def main(obj):
+#     return  hashlib.md5(pickle.dumps(obj)).hexdigest()
+#
+#
+# print(main('董付国，Python小屋'))
+
+
+
+
+def get_ser(s):
+    lst=[]
+    while True:
+        try:
+            num=s[0]
+            l_temp=sorted(set(s[1:num+1]))
+            lst+=l_temp
+            s=s[num+1:]
+        except Exception as e:
+            return lst
+
+a=input()
