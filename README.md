@@ -1071,3 +1071,166 @@ def get_ser(s):
             return lst
 
 a=input()
+
+
+
+
+-----------------------------------------------------------------------------------
+1.	请写 SQL 查出 （1）注册渠道 556 上各放款月份的放款件数和首期到期 0 天的件数逾期率。注：首期即 还款期数的第一期，0 天件数逾期率=逾期 1 天及以上的件数/所有到期件数
+总体思路：1）筛选556渠道和首期用户并在repay表中标记是否首期逾期
+          2）统计load表中放款字段放款月份
+          3）根据月份分组并计算筛选
+    select
+   lt.transacted_at_month,
+   sum(id_at_deadline='逾期')/count(*) as rate
+from (select
+	use_id,
+	registered_from
+from 
+	user u
+where registered_from=556)a
+left join 
+    (select
+       load_id,
+       user_id,
+	   transacted_at,
+	   month(transacted_at) as transacted_at_month
+	from 
+		loan)lt
+on 
+	a.use_id=lt.user_id
+inner join
+	(select
+		load_id,
+		term_no,
+		if(repaid_at>dead_line,'逾期','未逾期') as id_at_deadline
+	from 
+		repay
+	where 
+		term_no=1)rt
+on 
+	lt.load_id=rt.load_id
+group by 
+	lt.transacted_at_month
+
+
+2）现有如下表头的 Excel 文件 model3.xlsx，请用python/R读取excel 存入变量df中，对 loan_id 做 去重处理，并输出各放款月(transacted_at）各分期数〈term）的样本量分布。
+import pandas as pd
+#读取数据
+df=pd,read_excel(‘./model3.xlsx’)
+#根据loan_id字段去重
+df.drop_duplicates(subset=['loan_id'],inplace=True)
+ #将该列转换为datetime类型
+df['transacted']=pd.to_datetime(df['transacted'])
+#提取月份数据
+df['month']=df['transacted'].dt.month
+#分组统计数目并重命名
+df.groupby(['month','term']).agg({'loan_id':'count'}).reset_index().rename(columns={'loan_id':'num'})
+
+3）请用 python/R 在变量 df 中新增字段 A 和B，存入 content 中对应的 json 数据，并处理缺失值。
+import numpy as np
+import json
+
+def get_content(df,col):
+    #转换为字典
+    df1=json.loads(df)
+    #获取所需字段,如果该字段不存在用nan代替
+    df1[col]=df1['data'].get(col,np.nan)
+    #返回该字段
+return df1[col]
+
+#获取A字段中内容
+df['A']=df['content'].apply(get_content,args=('A',))
+#获取字段中内容
+df['B']=df['content'].apply(get_content,args=('B',))
+
+#在这里作为例子演示，用0填充缺失值，具体数值根据实际业务需求填充
+df['A'].fillna(0,inplace=True)
+df['B'].fillna(0,inplace=True)
+
+4）变量df中transacted_at在18-05-01 至 18-07-01的样本为模型model3的测试集，请用python/R 筛选出测试集中9期产品(term=9)的样本，并画出模型 model3 在该样本上 ROC曲线和Lift Chart 提升图
+ROC曲线
+from sklearn.metrics import roc_curve, auc 
+
+#将模型评分转换为list
+y_score=data_term_9['model3'].tolist()
+#计算fpr,tpr和threshold
+fpr,tpr,threshold = roc_curve(y_test, y_score) 
+#计算auc的值
+roc_auc = auc(fpr,tpr) 
+#绘制图形
+plt.figure()
+lw = 2
+plt.figure(figsize=(10,10))
+plt.plot(fpr, tpr, color='darkorange',
+         lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver operating characteristic example')
+plt.legend(loc="lower right")
+plt.show()
+
+lift-chart
+#绘制lift-chart图表格
+def lift_plot(predictions, labels, threshold_list, cut_point=100):
+    #计算分母
+    base = len([x for x in labels if x == 1]) / len(labels)
+   
+    #打包组合
+    predictions_labels = list(zip(predictions, labels))
+    #存储指标lift_value
+    lift_values = []
+    #阈值分割点的数量
+    x_axis_range = np.linspace(0, 1, cut_point)
+    #添加分割点
+    x_axis_valid = []
+    #遍历每个分割点
+    for i in x_axis_range:
+        #与分割点比较
+        hit_data = [x[1] for x in predictions_labels if x[0] > i]
+        # 避免为空
+        if hit_data:  
+            bad_hit = [x for x in hit_data if x == 1]
+            #计算分子
+            precision = len(bad_hit) / len(hit_data)
+            #计算指标
+            lift_value = precision / base
+            #添加指标
+            lift_values.append(lift_value)
+            #添加分割点
+            x_axis_valid.append(i)
+    #绘制图形
+    plt.plot(x_axis_valid, lift_values, color="blue")  # 提升线
+    # base线
+    plt.plot([0, 1], [1, 1], linestyle="-", color="darkorange", alpha=0.5, linewidth=2)  
+
+
+lift_plot(y_score, y_test,threshold)
+
+
+5) 以下是该现金分期产品的额度策略：分为初始额度和每次提额。 根据客户质量分为三组，初始额度由高至低为500元，400元，300元。 每次复贷提额策略分别为上一次额度乘以一个系数，再减去一个常量。然后四舍五入取整。 例：优质客户第一次借款，额度为500元，第二次借款时额度为 round(500 + (500*25% - 25))。 现有一客户额度是2006元，请用 求出其所在分组和提额次数（初始额度提额次数为0）
+
+def func(start, percent, constant):
+    global times
+    if start > 2006:
+        return
+    elif start == 2006:
+        return times
+    else:
+        times = times + 1
+        start = round(start*(1+percent)-constant)
+        return func(start, percent, constant)
+
+parameters = ((500, 0.25, 25),
+              (400, 0.2, 20),
+              (300, 0.15, 15))
+for para in parameters:
+    times = 0
+    result = func(*para)
+    if result is not None:
+        print(para, times)
+ 
+
