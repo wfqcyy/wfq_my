@@ -4,3 +4,105 @@ it is a good day
 lyx is a fine man
 lyx is a fine good man
 end end .
+
+
+
+#获取文件路径
+
+def get_path(file_path):
+    #存储路径信息
+    path_list=[]
+    #遍历路径下文件
+    for file in os.listdir(file_path):
+        #获取文件名称
+        file_name=os.path.splitext(file)[0]
+        #判断是否为Excel文件
+        if file.endswith('.xlsx'):
+            #添加文件路径
+            path_list.append((os.path.join(file_path,file),file_name))
+    #返回文件路径
+    return path_list
+
+
+#初始化MySQL连接
+
+import pymysql
+
+class Mysql_connect():
+    def __init__(self,host,user,password,database):
+        #初始化连接信息
+        self.conn=pymysql.connect(host=host,
+                                  user=user,
+                                  password=password,
+                                  database=database
+                                  )
+    
+    #运行sql语句
+    def run_sql(self,sql):
+        #获取游标
+        cursor=self.conn.cursor()
+        #执行SQL语句
+        cursor.execute(sql)
+        #提交事务
+        self.conn.commit()
+        #关闭连接
+        self.conn.close()
+
+
+#获取sql语句
+'''
+table_name：表名称
+df:DataFrame数据结构
+length：默认是255
+'''
+def get_sql(table_name,df,length=255):
+    #存储sql语句列表
+    create_list=[]
+    #遍历每一列
+    for col in df.columns.tolist():
+        #判断数据类型
+        if df[col].dtypes=='float':
+            #构建sql语句
+            sql_col=col+' '+'float'
+            #添加到列表
+            create_list.append(sql_col)
+        #判断数据类型
+        elif df[col].dtypes=='int64' or df[col].dtypes=='int32' or df[col].dtypes=='int':
+            #构建sql语句
+            sql_col=col+' '+'int'
+            #添加到列表
+            create_list.append(sql_col)
+         #判断数据类型
+        elif df[col].dtypes=='datetime64[ns]':
+             #构建sql语句
+            sql_col=col+' '+'datetime'
+            #添加到列表
+            create_list.append(sql_col)
+        else:
+            #构建sql语句
+            sql_col=col+' '+f'varchar({length})'
+            #添加到列表
+            create_list.append(sql_col)
+    #添加主键，替换列表中不必要内容
+    table_str='id int(64) primary key not null auto_increment,'+str(create_list).replace('[','').replace(']','').replace("'","")
+    #设置引擎
+    sql_create=f'''create table if not exists {table_name}({table_str})'''+' engine=innodb default charset=utf8'
+    #返回sql语句
+    return sql_create
+
+
+
+#遍历该目录下文件
+for files in get_path('./data/'):
+    #获取文件名称
+    name=files[1]
+    #读取表格
+    df=pd.read_excel(files[0])
+    #获取sql语句
+    sql=get_sql(name,df)
+    #连接MySQL
+    conn=Mysql_connect('127.0.0.1','root','253611','test')
+    #输出sql语句
+    print(sql+'\n')
+    #运行sql语句
+    conn.run_sql(sql)
