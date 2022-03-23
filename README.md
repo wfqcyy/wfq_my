@@ -1245,3 +1245,22 @@ D：两者都有明显的前期训练过程
 B选项KNN属于分类算法，Kmeans属于聚类算法，故排除
 C选项Kmeans需要定义超参数K，可以通过交叉验证等方法进行选取，故排除
 D选项KNN属于懒加载模型，它前期并没有明显的训练过程，Kmeans有明显的前期训练过程，故排除
+def get_category():
+    def func(start, percent, constant):
+        if start > 2006:
+            return
+        elif start == 2006:
+            return 0
+        else:
+            start = round(start*(1+percent)-constant)
+            return func(start, percent, constant)
+
+    parameters = ((500, 0.25, 25),
+                  (400, 0.2, 20),
+                  (300, 0.15, 15))
+    for para in parameters:
+        result = func(*para)
+        if result is not None:
+            print(*para)
+
+get_category()
