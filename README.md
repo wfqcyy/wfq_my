@@ -1295,3 +1295,29 @@ if __name__ == '__main__':
     print(table.player_rank())
 
 
+# def func(total_money):
+#     global start
+#     global percent
+#     global constant
+#
+#     if start > total_money:
+#         return
+#     elif start == total_money:
+#         return constant
+#     else:
+#         start = round(start*(1+percent)-constant)
+#         return func(total_money)
+#
+# parameters = ((500, 0.25, 25),
+#               (400, 0.2, 20),
+#               (300, 0.15, 15))
+# for para in parameters:
+#     start,percent,constant=para
+#     result = func(2006)
+#     if result is not None:
+#         if result==25:
+#             print('优质客户')
+#         elif result==20:
+#             print('中等客户')
+#         else:
+#             print('低质客户')
