@@ -1321,3 +1321,32 @@ if __name__ == '__main__':
 #             print('中等客户')
 #         else:
 #             print('低质客户')
+
+
+
+import string
+letters=string.ascii_lowercase+string.ascii_uppercase
+#获取辅音字母
+fuyin_letter=set(letters)-{'A','E','I','O','U','a','e','i','o','u'}
+
+s=list('udifkoca')
+print(fuyin_letter)
+print(letters)
+
+start=0
+end=len(s)-1
+while start<=end:
+    while start<=end and s[start] not in fuyin_letter:
+        start+=1
+    while start<=end and s[end] not in fuyin_letter:
+        end-=1
+    if start<=end:
+        s[start],s[end]=s[end],s[start]
+        start+=1
+        end-=1
+print(''.join(s))
+
+#aaaa aaaa
+#bbbb bbbb
+#abefeco acefebo
+#udifkoca ucikfoda
