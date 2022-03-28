@@ -1349,4 +1349,48 @@ print(''.join(s))
 #aaaa aaaa
 #bbbb bbbb
 #abefeco acefebo
-#udifkoca ucikfoda
+#udifk123oca ucikfoda
+
+
+
+
+#
+# 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可
+#
+# 
+# @param total_money int整型 总额度
+# @return string字符串
+
+
+
+start = 0
+percent = 0
+constant = 0
+class Solution:
+    def get_money(self, total_money):
+        global start
+        global percent
+        global constant
+        
+        while True:
+            if start == total_money:
+                return constant
+            else:
+                start = round(start*(1+percent)-constant)
+
+    def get_rank(self, total_money: int) -> str:
+        global start
+        global percent
+        global constant
+
+        parameters = ((500, 0.25, 25), (400, 0.2, 20), (300, 0.15, 15))
+        for para in parameters:
+            start, percent, constant = para
+            result = self.get_money(total_money*1.0)
+            if result is not None:
+                if result == 25:
+                    print('优质客户')
+                elif result == 20:
+                    print('中等客户')
+                else:
+                    print('低质客户')
