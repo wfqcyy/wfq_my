@@ -1449,3 +1449,20 @@ print(int(''.join(sorted(map(str,nums_sort),reverse=True))))
 
 
 print(sorted(['5','1','2']))
+
+select
+	sum(case when min_time>=interval_6_day then 1 else 0 end) as xjyh,
+	sum(case when max_time>=interval_6_day and min_time<interval_6_day then 1 else 0 end) as zsyh,
+	sum(case when max_time<interval_30_day then 1 else 0 end) as lsyh,
+	sum(case when max_time<interval_6_day and min_time>= interval_30_day then 1 else 0 end) as csyh
+from(select
+	`uid`,
+	(select date(max(out_time)) from tb_user_log) as max_time_all,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 5 day)) as interval_6_day,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 29 day)) as interval_30_day,
+	 date(min(in_time))as min_time,
+	 date(max(in_time))as max_time
+from 
+	tb_user_log
+group by 
+	`uid`)a
