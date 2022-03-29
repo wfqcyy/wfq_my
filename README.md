@@ -1466,3 +1466,169 @@ from
 	tb_user_log
 group by 
 	`uid`)a
+	
+
+select *
+from(
+select
+	"忠实用户",
+	round(sum(case when max_time>=interval_6_day and min_time<interval_6_day then 1 else 0 end)/count(distinct `uid`) ,2)as rate
+from(select
+	`uid`,
+	(select date(max(out_time)) from tb_user_log) as max_time_all,
+	(select date(min(in_time)) from tb_user_log) as min_time_all,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 5 day)) as interval_6_day,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 29 day)) as interval_30_day,
+	 date(min(in_time))as min_time,
+	 date(max(in_time))as max_time
+from 
+	tb_user_log
+group by 
+	`uid`)a1
+
+union all
+
+select
+	"新晋用户",
+	round(sum(case when min_time>=interval_6_day then 1 else 0 end)/count(distinct `uid`),2) as rate
+from(select
+	`uid`,
+	(select date(max(out_time)) from tb_user_log) as max_time_all,
+	(select date(min(in_time)) from tb_user_log) as min_time_all,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 5 day)) as interval_6_day,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 29 day)) as interval_30_day,
+	 date(min(in_time))as min_time,
+	 date(max(in_time))as max_time
+from 
+	tb_user_log
+group by 
+	`uid`)a
+
+
+union all
+select
+	"沉睡用户",
+	round(sum(case when max_time<interval_6_day and min_time>=min_time_all  then 1 else 0 end)/count(distinct `uid`),2) as rate
+from(select
+	`uid`,
+	(select date(max(out_time)) from tb_user_log) as max_time_all,
+	(select date(min(in_time)) from tb_user_log) as min_time_all,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 5 day)) as interval_6_day,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 29 day)) as interval_30_day,
+	 date(min(in_time))as min_time,
+	 date(max(in_time))as max_time
+from 
+	tb_user_log
+group by 
+	`uid`)a3
+
+
+union all
+
+select
+	"流失用户",
+	round(sum(case when max_time<interval_30_day and min_time>=min_time_all then 1 else 0 end)/count(distinct `uid`),2) as rate
+from(select
+	`uid`,
+	(select date(max(out_time)) from tb_user_log) as max_time_all,
+	(select date(min(in_time)) from tb_user_log) as min_time_all,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 5 day)) as interval_6_day,
+	(select date_sub((select date(max(out_time)) from tb_user_log),interval 29 day)) as interval_30_day,
+	 date(min(in_time))as min_time,
+	 date(max(in_time))as max_time
+from 
+	tb_user_log
+group by 
+	`uid`)a2
+)c 
+order by rate desc;
+	
+select 
+	uid,
+	in_time,
+	out_time,
+	ranking,
+	date_sub(in_time,interval ranking day)
+	sign_in
+from(
+select
+	uid,
+	date(in_time) in_time,
+	date(out_time) out_time,
+	rank() over(partition by uid order by date(in_time)) as ranking,
+	sign_in
+from 
+	tb_user_log
+where
+	artical_id=0 and date(in_time)>='2021-07-01' and date(in_time)<'2021-11-01' and sign_in=1)a
+
+
+	
+select
+	uid,
+	sign_date,
+	count(1) as sign_num
+from(
+select 
+	uid,
+	in_time,
+	out_time,
+	ranking,
+	date_sub(in_time,interval ranking day) as sign_date,
+	sign_in
+from(
+select
+	uid,
+	date(in_time) in_time,
+	date(out_time) out_time,
+	rank() over(partition by uid order by date(in_time)) as ranking,
+	sign_in
+from 
+	tb_user_log
+where
+	artical_id=0 and date(in_time)>='2021-07-01' and date(in_time)<'2021-11-01' and sign_in=1)a)b
+group by 
+	uid,
+	sign_date
+
+	
+select
+	uid,
+	sum(jifen_z+jifen_g)
+from(
+select
+	uid,
+	sign_date,
+	floor(sign_num/7) *8+sign_num as jifen_z,
+	case when mod(sign_num,7)=3 then 2 else 0 end as jifen_g
+from(
+select
+	uid,
+	sign_date,
+	count(1) as sign_num
+from(
+select 
+	uid,
+	in_time,
+	out_time,
+	ranking,
+	date_sub(in_time,interval ranking day) as sign_date,
+	sign_in
+from(
+select
+	uid,
+	date(in_time) in_time,
+	date(out_time) out_time,
+	rank() over(partition by uid order by date(in_time)) as ranking,
+	sign_in
+from 
+	tb_user_log
+where
+	artical_id=0 and date(in_time)>='2021-07-01' and date(in_time)<'2021-11-01' and sign_in=1)a)b
+group by 
+	uid,
+	sign_date)c
+	)d
+group by 
+	uid
+	
