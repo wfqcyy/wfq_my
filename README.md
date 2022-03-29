@@ -1394,3 +1394,16 @@ class Solution:
                     print('中等客户')
                 else:
                     print('低质客户')
+
+
+
+# from collections import defaultdict
+# from collections import OrderedDict
+# dic=defaultdict(list)
+# lst=[1,2,3,2,1,5,4]
+# 
+# for k,va in[(value,index) for index,value in enumerate(lst)]:
+#     dic[k].append(va)
+# print(dic)
+# 
+# print([cnts[1] for value,cnts in filter(lambda x:len(x[1])>=2,dict(dic).items())])
