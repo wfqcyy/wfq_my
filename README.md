@@ -1407,3 +1407,45 @@ class Solution:
 # print(dic)
 # 
 # print([cnts[1] for value,cnts in filter(lambda x:len(x[1])>=2,dict(dic).items())])
+
+
+#-----------------
+# from collections import defaultdict
+#
+# dic=defaultdict(list)
+# lst=[1,2,3,2,1,5,4]
+#
+# for k,va in[(value,index) for index,value in enumerate(lst)]:
+#     dic[k].append(va)
+# print(dic)
+#
+# print([cnts[1] for value,cnts in filter(lambda x:len(x[1])>=2,dict(dic).items())])
+
+
+# from collections import defaultdict
+#
+# dics=defaultdict(list)
+# lst=[(1,90),(1,93),(2,93),(2,99),(2,98),(2,97),(1,62),(1,56),(2,95),(1,61)]
+#
+# for index,value in lst:
+#     dics[index].append(value)
+#
+# for key,value in dics.items():
+#     dics[key]=sorted(value,reverse=True)[:3]
+#
+# answer = dict()
+# for id, scores in dics.items():
+#     answer[id] =round(sum(scores)/3,1)
+# print(answer)
+
+import re
+
+s='abcd124fgg698djiw3986jhdg2567'
+nums=re.findall('\d+',s)
+print(nums)
+nums_sort=sorted(nums,key=len,reverse=True)[0]
+print(nums_sort,type(nums_sort))
+print(int(''.join(sorted(map(str,nums_sort),reverse=True))))
+
+
+print(sorted(['5','1','2']))
