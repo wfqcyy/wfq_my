@@ -1631,4 +1631,86 @@ group by
 	)d
 group by 
 	uid
-	
+
+import pandas as pd
+
+
+def get_data(file_path):
+    #读取文件
+    data=pd.read_excel(file_path,skiprows=1,sheet_name='刷新记录')
+    #筛选命中的单子
+    data_mz=data[data['是否命中']=='是']
+    #获取基线版本和F1name
+    data_jxbb_dz=data_mz[['基线版本','F1name']].values.tolist()
+    #输出结果
+    print(data_jxbb_dz)
+    #返回数据
+    return data_jxbb_dz
+
+
+
+# get_data('./北京产品稳定性Beta问题单2020年-ABYJC.xlsx')
+
+
+
+def get_str(s):
+    s1=['0' for i in range(len(s))]
+    s_even=''.join(list(filter(lambda x:s.index(x)%2==0,s)))
+    s_even=sorted(s_even)
+    print(s_even)
+    s_odd=''.join(list(filter(lambda x:s.index(x)%2==1,s)))
+    s_odd = sorted(s_odd)
+    print(s_odd)
+
+    even_index=0
+    odd_index=0
+    for index,value  in enumerate(s):
+        if index%2==0:
+            s1[index]=s_even[even_index]
+            even_index+=1
+        else:
+            s1[index]=s_odd[odd_index]
+            odd_index+=1
+    return ''.join(s1)
+
+print(get_str("decfab"))
+
+
+def get_transform_zf(s):
+    for i in s:
+        if i.isdigit():
+            number_bin=bin(i)
+            bin_temp='0'+number_bin.replace('0b','') if len(number_bin.replace('0b',''))<=4 else number_bin
+            bin_rev=reversed(bin_temp)
+            bin_num
+
+
+import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import datetime
+import pandas as pd
+import requests
+import json
+
+
+
+
+date_now=datetime.datetime.now().strftime("%Y-%m-%d")
+print(date_now)
+
+
+def get_data(file_path):
+    #读取文件
+    data=pd.read_excel(file_path,skiprows=1,sheet_name='刷新记录')
+    print(data.columns)
+    #筛选命中的单子
+    data_mz=data[((data['是否命中']=='是') & (data['录入日期']==date_now))]
+    #获取基线版本和F1name
+    data_jxbb_dz=data_mz[['基线版本','F1name']].values.tolist()
+    #输出结果
+    print(data_jxbb_dz)
+    #返回数据
+    return data_jxbb_dz
+
+print(get_data('./北京产品稳定性Beta问题单2020年-ABYJC.xlsx'))
