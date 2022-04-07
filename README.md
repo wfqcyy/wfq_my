@@ -1746,3 +1746,60 @@ for cookie_str in cookies_list:
 
 #输出登录结果，发现欢迎结果为4个，四个用户登录成功
 print(re.findall('欢迎',result))
+
+from selenium import webdriver
+import time
+import json
+
+
+#用户名
+users=[
+    {'username':'test123456','password':'test123456'},
+    {'username':'wfq123','password':'123'},
+    {'username':'cauwfq','password':'cauwfq'},
+    {'username':'cauwfq1234','password':'cauwfq1234'}
+]
+
+
+#登录网址
+def login(username,password):
+    #初始化url
+    url='http://shanzhi.spbeen.com/login/'
+    #初始化webdriver
+    driver=webdriver.Chrome()
+    #最大化窗口
+    driver.maximize_window()
+    #请求url
+    driver.get(url)
+    #用户名输入框
+    username_input=driver.find_element_by_xpath('//*[@id="username"]')
+    #发送用户名
+    username_input.send_keys(username)
+    time.sleep(1)
+    #密码输入框
+    password_input=driver.find_element_by_xpath('//*[@id="MemberPassword"]')
+    #发送密码
+    password_input.send_keys(password)
+    time.sleep(1)
+    #点击登录按钮
+    driver.find_element_by_xpath('/html/body/div/div/div[2]/button').click()
+    time.sleep(3)
+    #获取cookies
+    cookie_lists=driver.get_cookies()
+    #获取cookie值
+    cookie_dict={cookie['name']:cookie['value'] for cookie in cookie_lists}
+
+    #写入文件
+    with open('./cookies.txt','a+',encoding='utf8') as f:
+        f.write(json.dumps(cookie_dict))
+        f.write('\n')
+    #退出浏览器
+    driver.quit()
+
+
+if __name__ == '__main__':
+    for user in users:
+        login(user['username'],user['password'])
+
+
+
