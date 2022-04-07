@@ -1,0 +1,333 @@
+1、hive参数传递
+①hive参数有一些默认值，是在hive-default.xml文件汇总
+②hive-site.xml
+③启动hive cli或者使用beeline连接hiveserver2的时候，设置参数
+④进入到cli或者beeline中之后，设置参数
+
+propertyName=value1
+④ > ③ > ② > ①
+
+用第三种方式
+bin/hive --hiveconf "mapred.job.queue.name=root.default"
+进入到hive后，如何获得属性值：${hiveconf:mapred.job.queue.name}
+hive --hivevar  name=zhangsan
+进入到hive后，如何获得属性值：${hivevar:name} 简写形式 ${name}
+hive --hiveconf "mapred.job.queue.name=root.default" -d my="201912" --database myhive
+-d 是--define的简写
+进入到hive后，如何获得属性值：${my}
+hive > select * from myhive.score2 
+where concat(year, month) = ${my} limit 5;
+
+select * from student 
+left join score 
+on student.s_id = score.s_id 
+where score.month = '201807' and score.s_score > 80 and score.c_id = 03;
+
+201807\80\03用进入cli时传参的方式，传入
+
+create external table student
+(s_id string, s_name string, s_birth string, s_sex string) 
+row format delimited fields terminated by '\t';
+
+use myhive;
+select * from student 
+left join score on student.s_id = score.s_id 
+where score.month = ${hiveconf:month} 
+and score.s_score > ${hivevar:s_score} and score.c_id = ${c_id};   
+    
+2、hive的函数
+
+case a when b then c when d then e else f end
+case when a then b when c then d else f end
+
+array
+map
+struct
+
+create table score_map(name string, score map<string, int>, address array<string>)
+row format delimited fields terminated by '\t' 
+collection items terminated by ',' 
+map keys terminated by ':';
+
+zhangsan	数学:80,语文:89,英语:95	bj,tj
+lisi	语文:60,数学:80,英语:99
+
+create table movie_score(name string, info struct<number:int,score:float>)
+row format delimited fields terminated by "\t"  
+collection items terminated by ":"; 
+
+create table person(name string, work_locations array<string>)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+COLLECTION ITEMS TERMINATED BY ',';
+
+孙悟空白羊座A老王射手座A宋宋白羊座B猪八戒白羊座A按住啦baby射手座A
+
+射手座,A            老王|冰冰
+白羊座,A            孙悟空|猪八戒
+白羊座,B            宋宋
+
+create table person_info(name string, constellation string, blood_type string) 
+row format delimited fields terminated by "\t";
+
+select 
+	t1.base, concat_ws('|', collect_set(t1.name)) name 
+from    
+	(select name, concat(constellation, "," , blood_type) base 
+	from person_info) t1 
+group by t1.base;
+
+create table movie_info(movie string, category array<string>) 
+row format delimited fields terminated by "\t" 
+collection items terminated by ",";
+
+select movie, category_name from movie_info 
+lateral view explode(category) table_tmp as category_name;
+
+select explode(category) from movie_info;
+《疑犯追踪》
+
+悬疑
+动作
+科幻
+剧情
+
+笛卡尔乘积：
+《疑犯追踪》	悬疑
+《疑犯追踪》	动作
+《疑犯追踪》	科幻
+《疑犯追踪》	剧情
+
+select movie, category_name from movie_info 
+lateral view explode(category) table_tmp as category_name;
+
+zhangsan	child1,child2,child3,child4	k1:v1,k2:v2
+lisi	child5,child6,child7,child8	 k3:v3,k4:v4
+
+-- 字段之间使用\t分割，需求将所有的child进行拆开成为一列
++----------+--+
+| mychild  |
++----------+--+
+| child1   |
+| child2   |
+| child3   |
+| child4   |
+| child5   |
+| child6   |
+| child7   |
+| child8   |
++----------+--+
+
+-- 将map的key和value也进行拆开，成为如下结果
++-----------+-------------+--+
+| mymapkey  | mymapvalue  |
++-----------+-------------+--+
+| k1        | v1          |
+| k2        | v2          |
+| k3        | v3          |
+| k4        | v4          |
++-----------+-------------+--+
+
+create table hive_explode.t3(name string, children array<string>, address Map<string, string>) 
+row format delimited fields terminated by '\t' 
+collection items terminated by ','  
+map keys terminated by ':' 
+stored as textFile;
+
+explode(children)
+
+k1:v1,k2:v2
+
+| k1        | v1          |
+| k2        | v2          |
+
+explode(address) as (mykey, myvalue)
+
+a:shandong,b:beijing,c:hebei
+|1,2,3,4,5,6,7,8,9
+|[{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+
+4900
+2090
+6987
+
+ create table hive_explode.explode_lateral_view (area string, goods_id string, sale_info string) ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' STORED AS textfile;
+ 
+ explode(split(goods_id, ','))
+ 
+"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"
+"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"
+"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"
+
+"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"
+
+select explode(split(regexp_replace(regexp_replace(sale_info,'\\[\\{',''),'}]',''),'},\\{')) as sale_info from hive_explode.explode_lateral_view;
+
+select get_json_object(explode(split(regexp_replace(regexp_replace(sale_info,'\\[\\{',''),'}]',''),'},\\{')),'$.monthSales') as sale_info from hive_explode.explode_lateral_view;
+
+UDTF -> 进去一行数据，出来多行数据
+explode 就是一个udtf函数
+
+select explode(split(area,',')) as area, good_id from explode_lateral_view;
+
+get_json_object()
+"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"
+"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"
+"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"
+
+lateral view 上场了
+
+a:shandong,b:beijing,c:hebei
+|1,2,3,4,5,6,7,8,9
+|[{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+
+1,2,3,4,5,6,7,8,9
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+select goods_id2, sale_info from explode_lateral_view 
+LATERAL VIEW explode(split(goods_id, ','))goods as goods_id2;
+
+1       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+2       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+3       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+4       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+5       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+6       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+7       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+8       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+9       [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},{"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},{"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]
+
+select goods_id2, sale_info, area2 from explode_lateral_view 
+LATERAL VIEW explode(split(goods_id, ','))goods as goods_id2 
+LATERAL VIEW explode(split(area,','))area as area2;
+
+
+"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"
+"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"
+"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"
+
+select explode(split(regexp_replace(regexp_replace(sale_info,'\\[\\{',''),'}]',''),'},\\{')) as sale_info from hive_explode.explode_lateral_view;
+
+select 
+get_json_object(concat('{',sale_info_1,'}'),'$.source') as source, 
+get_json_object(concat('{',sale_info_1,'}'),'$.monthSales') as monthSales, 
+get_json_object(concat('{',sale_info_1,'}'),'$.userCount') as userCount,  
+get_json_object(concat('{',sale_info_1,'}'),'$.score') as score 
+from explode_lateral_view   
+LATERAL VIEW explode(split(regexp_replace(regexp_replace(sale_info,'\\[\\{',''),'}]',''),'},\\{'))sale_info as sale_info_1;
+
+create table test_udf(col1 int,col2 int) 
+row format delimited fields terminated by ',';
+
+select reflect("java.lang.Math","max", col1, col2) from test_udf;
+
+cookie1,2015-04-10,1
+cookie1,2015-04-11,5
+cookie1,2015-04-12,7
+cookie1,2015-04-13,3
+cookie1,2015-04-14,2
+cookie1,2015-04-15,4
+cookie1,2015-04-16,4
+cookie2,2015-04-10,2
+cookie2,2015-04-11,3
+cookie2,2015-04-12,5
+cookie2,2015-04-13,6
+cookie2,2015-04-14,3
+cookie2,2015-04-15,9
+cookie2,2015-04-16,7
+
+CREATE EXTERNAL TABLE cookie_pv (
+cookieid string,
+createtime string, 
+pv INT
+) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' ;
+
+使用分析函数来求取每个cookie访问PV的前三条记录
+
+cookie1,2015-04-12,7	1	1	1
+cookie1,2015-04-11,5    2   2   2
+cookie1,2015-04-15,4    3   3   3
+cookie1,2015-04-16,4    4   3   3
+cookie1,2015-04-13,3    5   5   4
+cookie1,2015-04-14,2    6   6   6
+cookie1,2015-04-10,1    7   7   6
+
+row_number() over(partition by xxx order by xxx desc|asc) 增加序号
+rank over(partition by xxx order by xxx desc|asc) 增加排名
+dense_rank over(partition by xxx order by xxx desc|asc)
+
+partition by 类似于group by 分组
+order by 分组内排序 
+
+select * from (
+SELECT 
+cookieid,
+createtime,
+pv,
+RANK() OVER(PARTITION BY cookieid ORDER BY pv desc) AS rn1,
+DENSE_RANK() OVER(PARTITION BY cookieid ORDER BY pv desc) AS rn2,
+ROW_NUMBER() OVER(PARTITION BY cookieid ORDER BY pv DESC) AS rn3 
+FROM cookie_pv 
+) temp where temp.rn1 <= 3;
+
+SELECT 
+cookieid,
+createtime,
+pv,
+RANK() OVER(PARTITION BY cookieid ORDER BY pv desc) AS rn1
+FROM cookie_pv;
+
+cookie1 2015-04-12      7       1
+cookie1 2015-04-11      5       2
+cookie1 2015-04-16      4       3
+cookie1 2015-04-15      4       3
+cookie1 2015-04-13      3       5
+cookie1 2015-04-14      2       6
+cookie1 2015-04-10      1       7
+
+
+视频总结：
+1、如何传参
+	hive beeline 进行传参
+	--hiveconf  ${hiveconf:key}
+	--hivevar  ${hivevar:key} 简写 ${key}
+	--define -d ${key}
+2、函数
+数值
+日期
+条件
+	if
+	case when 两种
+字符串
+统计函数 max
+复合类型 map_keys() map_values() size()
+行转列
+列转行
+	lateral view explode () tmpTable as tmpCol
+reflect
+	骚气
+topN分析函数
+	row_number() over(partition by xxx order by xxx desc|asc)
+	rank() over(partition by xxx order by xxx desc|asc)
+	dense_rank() over(partition by xxx order by xxx desc|asc)
+自定义行数
+	集成相关的父类，实现相关的方法
+	
+
+
+
+
+
+
+
+
+
+
