@@ -1714,3 +1714,35 @@ def get_data(file_path):
     return data_jxbb_dz
 
 print(get_data('./北京产品稳定性Beta问题单2020年-ABYJC.xlsx'))
+
+
+import requests
+import json
+import re
+
+
+#读取cookies数据
+with open('cookies.txt','r',encoding='utf8') as f:
+    #存储为列表
+    cookies_list=f.readlines()
+
+
+#存储结果
+result=''
+#遍历每个cookie
+for cookie_str in cookies_list:
+    #加载cookie
+    cookie_dict=json.loads(cookie_str)
+    #构建会话
+    session=requests.session()
+    #加入到会话中
+    session.cookies=requests.utils.cookiejar_from_dict(cookie_dict)
+    #请求网址
+    response=session.get('http://shanzhi.spbeen.com/login/')
+    #输出响应内容
+    #print(response,response.text)
+    #存储结果
+    result+=response.text
+
+#输出登录结果，发现欢迎结果为4个，四个用户登录成功
+print(re.findall('欢迎',result))
