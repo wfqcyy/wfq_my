@@ -1802,4 +1802,51 @@ if __name__ == '__main__':
         login(user['username'],user['password'])
 
 
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time : 2022/4/8 14:20
+# @Author : zw0038142
+# @File : selenium_set.py
+# @Software: PyCharm
 
+import pandas as pd
+from selenium.webdriver import Chrome
+from selenium.webdriver import ChromeOptions
+
+
+options = ChromeOptions()
+options.add_experimental_option('excludeSwitches', ['enable-automation'])
+options.add_experimental_option('useAutomationExtension', False)
+options.add_argument("--headless")  # => 为Chrome配置无头模式
+
+Chrome_Driver = Chrome(options=options)
+Chrome_Driver.maximize_window()
+
+Chrome_Driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+  "source": """
+    Object.defineProperty(navigator, 'webdriver', {
+      get: () => undefined
+    })
+  """
+})
+
+df = pd.read_excel('./baseline_app_lianjie.xlsx')
+print(df)
+links = df['链接'].tolist()
+
+dict = {}
+for link in links:
+    Chrome_Driver.get(link)
+    Chrome_Driver.implicitly_wait(10)
+    # content = Chrome_Driver.page_source
+    # print(content)
+    software = Chrome_Driver.find_element_by_xpath('//*[@id="appMain"]/div[2]/div[2]/div[1]/div[1]/div/p').text
+    version = Chrome_Driver.find_element_by_xpath('//*[@id="andApp-baseInfo"]/div[2]/div[2]/div/ul/li[7]/p[2]').text
+    print(software, version)
+
+    dict[software] = version
+
+# 创建df
+res_data = pd.DataFrame({'版本': dict})
+print(res_data)
+res_data.to_excel('./res.xlsx', index=False)
