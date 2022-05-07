@@ -1850,3 +1850,207 @@ for link in links:
 res_data = pd.DataFrame({'版本': dict})
 print(res_data)
 res_data.to_excel('./res.xlsx', index=False)
+
+
+
+
+#include<stdio.h>
+#include<string.h>
+#include<malloc.h>
+
+typedef struct LNode{
+	int data;
+	struct LNode * next;
+}LNode,*LinkList; 
+
+LinkList List_HeadInsert(LinkList &L){
+	LNode *s;
+	int x;
+	L=(LinkList) malloc(sizeof(LNode));
+	L->next=NULL;
+	
+	scanf("%d",&x);
+	while(x!=999){
+		s=(LinkList)malloc(sizeof(LNode));
+		s->data=x;
+		s->next=L->next;
+		L->next=s; 
+		scanf("%d",&x);
+	}
+	return L;
+}
+
+
+LinkList List_TailInsert(LinkList &L){
+	L=(LinkList)malloc(sizeof(LNode));
+	L->next=NULL;
+	int x;
+	LNode *r=L;
+	scanf("%d",&x);
+	
+	while(x!=999){
+		LinkList s=(LinkList)malloc(sizeof(LNode));
+		s->data=x;
+		r->next=s;
+		r=s;
+		scanf("%d",&x);
+	}
+	r->next=NULL;
+	return L;
+}
+
+
+
+//按序号查找节点 
+LNode* GetElem(LinkList L,int i){
+	int j=1;
+	LNode* p=L->next;
+	
+	if(i==0) return L;
+	if(i<1)  return NULL;
+	while(p &&j<i){
+		p=p->next;
+		j++;
+	}
+	return p;
+}
+
+
+//按值查找节点 
+LNode *LocationElem(LinkList L,int e){
+	LNode *p=L->next;
+	while(p!=NULL&&p->data!=e){
+		p=p->next; 
+	}
+	return p;
+	 
+}
+
+//输出链表每个节点 
+void print_data(LinkList &L){
+	LinkList p=L->next;
+	while (p){
+		printf("%d ",p->data);
+		p=p->next;
+	} 
+}
+
+void reverse_print_data(LinkList L){
+	if(L->next!=NULL){
+		reverse_print_data(L->next);
+	}
+
+	if(L!=NULL) printf("%d ",L->data);
+
+} 
+
+//删除最小值
+LinkList Delete_min(LinkList &L){
+	LNode *pre=L,*p=L->next;
+	LNode *minpre=pre, *minp=p;
+	while(p!=NULL){
+		if(p->data<minp->data){
+			minp=p;
+			minpre=pre;
+		}
+		pre=p;
+		p=p->next;
+	}
+	minpre->next=minp->next;
+	free(minp);
+	return L;
+} 
+
+
+//递归删除值为num节点 
+void Del_x_num(LinkList &L,int num){
+	LNode *p;
+	if(L==NULL){
+		return;
+	}
+	
+	if(L->data==num){
+		p=L;
+		L=L->next;
+		free(p);
+		Del_x_num(L,num);
+	}
+	else{
+		Del_x_num(L->next,num);
+	}
+} 
+
+
+
+//删除值为num节点 
+void Del_x(LinkList &L, int num){
+	LinkList p=L->next;
+	LinkList pre=L;
+	LinkList q=NULL;
+	while(p){
+		if(p->data==num){
+			q=p;
+			p=p->next;
+			free(q);
+			pre->next=p;
+		} 
+		else{
+			pre=p;
+			p=p->next;
+		}
+	} 
+}
+
+LinkList reverse(LNode *p){
+	if(p->next==NULL){
+		return p;
+	}
+	
+	LinkList temp=NULL;
+	LinkList pre=NULL;
+	
+	while(p){
+		temp=p->next;
+		p->next=pre;
+		pre=p;
+		p=temp;
+	}
+	
+	return pre;
+} 
+
+int main(){
+	LinkList head=NULL;
+	LinkList L_list=List_TailInsert(head);
+	print_data(L_list);
+	printf("\n");
+////	reverse_print_data(L_list);
+//	LinkList delte_after=Delete_min(L_list);
+//	print_data(delte_after);
+//	
+//	
+//	printf("============");
+//	Del_x_num(L_list,2);
+//	print_data(L_list);
+//	
+//	printf("\n");
+//	printf("============");
+//	Del_x(L_list,99);
+//	print_data(L_list);
+	
+		
+	printf("\n");
+	printf("============");
+	LinkList reverse_p=reverse(L_list);
+	print_data(reverse_p);
+	
+	
+	return 0;
+} 
+
+
+
+
+
+
+
