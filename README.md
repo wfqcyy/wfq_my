@@ -2051,6 +2051,50 @@ int main(){
 
 GS24180
 
+import  pandas as pd
+import re
+import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import datetime
+import pandas as pd
+import requests
+import json
 
+df=pd.read_excel('./baseline_app_lianjie.xlsx')
+print(df)
+
+
+links=df['链接'].tolist()
+
+
+
+headers={
+'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36',
+'referer': 'https://www.qimai.cn/',
+'cookie':'qm_check=SxJXQEUSChd2fHd1dRQQeV5EVVwcEHxZRlVVGGYREGV4dBB3QlRHWllaQxQOAwAQdFlCVVZDAXQIARROQ28FbwAQQEZoB28JHBR8A3QBAR0CBxsFAh4IAAQWCAcIAxkSHBdUWlVaWxYCEgAcABwAHAUbAhJE; PHPSESSID=a3lamhv7v7c84e5el4kb0ieook; tgw_l7_route=d09474674af82c17375cfcdd775c0c28; USERINFO=b%2BnLrXlvq6Gjly4qL3F3VBQIWi%2FwsJAwAvKs4MDmzWc%2FOhTH99WudyOhCv%2FRjk7vEh5Fr6SsqNUQjV1uqKJlcfV1FH%2BCvboXKS8F9qQ702f5nfFgbP1z95a41wBwDhsUUEw9cbYcrWT7iaIyyUvSmQylGZOSMNR1; AUTHKEY=KM9o8UW%2BbRDqZnApx%2BY92AIByCQ48PcHMW7TwpFR2rhGkOEmXvu9FapR%2B3XsShEo0dTmktqRnhnBHSSCXXmi6%2FEyCSxI36cAJosWd1QICYghELTA7dn6ng%3D%3D; aso_ucenter=1541HOSUS38cf0vS6RWkE71kLNcNSsl8NF36KL1PxZ5A%2BgtBoZ33mgzX93vi1wtS1g; synct=1649384903.709; syncd=-190'
+}
+
+url='https://api.qimai.cn/andapp/info'
+
+
+
+
+for link in links:
+    print(link)
+    numbers=re.findall(r'\d+',link)
+    print(numbers)
+    params={
+        'analysis':'ew5TCHYTH1FeVFFAExhXUBBZXFpwEwEDBAIFWgUGBVQKB3YTAQ==',
+        'appid':numbers[0],
+        'market':numbers[1]
+    }
+    res=requests.get(url=url,
+                     headers=headers,
+                     params=params
+                     )
+    print(res.status_code)
+    print(json.loads(res.text)['appInfo']['app_name'],json.loads(res.text)['appInfo']['app_version'])
+    time.sleep(60)
 
 
